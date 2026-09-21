@@ -1,5 +1,5 @@
-import { teamMemberships, teams } from '@arena/db';
-import { assertCan } from '@arena/authz';
+import { teamMemberships, teams, users } from '@arena/db';
+import { assertCan, can } from '@arena/authz';
 import { requireGame } from '@arena/game-registry';
 import type { CreateTeamInput } from '@arena/schemas';
 import { and, asc, eq, inArray, isNull } from 'drizzle-orm';
@@ -70,4 +70,25 @@ export async function listTeams(scope: OrgScope) {
 export async function getTeamBySlug(scope: OrgScope, slug: string) {
   const all = await listTeams(scope);
   return all.find((t) => t.slug === slug) ?? null;
+}
+
+/** Members of one team. Public roster fields only; emails are limited to those who manage members. */
+export async function listTeamRoster(scope: OrgScope, teamId: string) {
+  const { tx, actor } = scope;
+  assertCan(actor, 'read', 'roster');
+  const showEmail = can(actor, 'write', 'members');
+  const rows = await tx
+    .select({
+      userId: users.id,
+      name: users.name,
+      email: users.email,
+      image: users.image,
+      role: teamMemberships.role,
+      gameRoleId: teamMemberships.gameRoleId,
+    })
+    .from(teamMemberships)
+    .innerJoin(users, eq(users.id, teamMemberships.userId))
+    .where(eq(teamMemberships.teamId, teamId))
+    .orderBy(asc(teamMemberships.createdAt));
+  return rows.map((r) => ({ ...r, email: showEmail ? r.email : null }));
 }

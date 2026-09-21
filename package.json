@@ -17,7 +17,7 @@
     "gen:tokens": "pnpm --filter @arena/ui gen:tokens",
     "db:generate": "pnpm --filter @arena/db generate",
     "db:migrate": "pnpm --filter @arena/db migrate",
-    "seed": "pnpm --filter @arena/db seed",
+    "seed": "pnpm --filter @arena/domain seed",
     "format": "prettier --write ."
   },
   "devDependencies": {

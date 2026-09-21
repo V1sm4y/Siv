@@ -95,3 +95,9 @@ export async function changeMemberRole(
   });
   return updated!;
 }
+
+export async function countMembers(scope: OrgScope): Promise<number> {
+  assertCan(scope.actor, 'write', 'members');
+  const [row] = await scope.tx.select({ n: sql<number>`count(*)::int` }).from(memberships);
+  return row?.n ?? 0;
+}

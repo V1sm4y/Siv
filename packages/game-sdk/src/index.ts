@@ -95,8 +95,9 @@ export function defineGameModule<T extends GameModule>(m: T): T {
 }
 
 export const MANUAL_ADAPTERS: AdapterCapability[] = [
-  { id: 'manual', label: 'Manual entry', source: 'manual', requiresCredentials: false, status: 'available' },
-  { id: 'csv', label: 'CSV import', source: 'csv', requiresCredentials: false, status: 'available' },
+  // 'planned' until the ingestion UI ships (M2/M3). The UI shows this status verbatim.
+  { id: 'manual', label: 'Manual entry', source: 'manual', requiresCredentials: false, status: 'planned' },
+  { id: 'csv', label: 'CSV import', source: 'csv', requiresCredentials: false, status: 'planned' },
 ];
 
 /** Checks the invariants every module must satisfy. Used by the conformance test. */

@@ -1,4 +1,4 @@
-import { invites, memberships, setTenant, teamMemberships, teams, users, type Db } from '@arena/db';
+import { invites, memberships, organizations, setTenant, teamMemberships, teams, users, type Db } from '@arena/db';
 import { assertCan, type OrgRole } from '@arena/authz';
 import type { InviteInput } from '@arena/schemas';
 import { and, desc, eq, isNull } from 'drizzle-orm';
@@ -107,6 +107,7 @@ export async function acceptInvite(db: Db, p: { token: string; userId: string } 
       ip: p.ip,
       userAgent: p.userAgent,
     });
-    return { orgId: invite.orgId };
+    const [org] = await tx.select({ slug: organizations.slug }).from(organizations).where(eq(organizations.id, invite.orgId));
+    return { orgId: invite.orgId, orgSlug: org?.slug ?? '' };
   });
 }

@@ -193,7 +193,7 @@ Important modelling choices:
 |---|---|
 | Design system, shell, auth, orgs/teams/RBAC, game switcher, audit-log skeleton | **M0** |
 | 5.1 channels/threads/DM/reactions/pins, structured messages (scrim request, poll, review request, feedback card), presence, notifications, global search (v1), Discord bridge (import first) | **M1** |
-| 5.2 roster, presence board, scheduling + availability heatmap + conflict detection, practice planner, tasks, ICS feed (Google/Outlook OAuth sync later) | **M2** |
+| 5.2 + 5.8 roster, presence board, scheduling + availability heatmap + conflict detection, practice planner, tasks, ICS feed (Google/Outlook OAuth sync later); **1:1 notes, goals, wellness check-ins (consent-gated), data export/deletion UI** | **M2** |
 | 5.3 dashboards, 5.4 scouting, 5.5 tactical board + playbook, Valorant adapters | **M3** |
 | 5.5 Live Guidance, 5.6 Match Day, 5.5b VOD review, voice rooms + Match Comms | **M4** |
 | 5.7 contracts, e-sign, payroll, budgets, recruitment, transfers; 5.9 sponsors | **M5** |
@@ -335,8 +335,34 @@ Discord relay (keep import) → Google/Outlook calendar OAuth sync (keep ICS) �
 
 ## 14. Progress log
 
-| Milestone | Status | Done | Stubbed | Next |
-|---|---|---|---|---|
-| Planning | ✅ | PLAN.md, DECISIONS.md, research, Q1/Q3/Q4/Q5 resolved | — | M0 |
-| M0 | ⬜ | | | |
-| M1–M8 | ⬜ | | | |
+| Milestone | Status |
+|---|---|
+| Planning | ✅ Done |
+| **M0 Foundation** | ✅ **Done (2026-09-21)**: see below |
+| M1–M8 | ⬜ Not started |
+
+### M0: what is done
+
+- **Repo & tooling:** pnpm 12 + Turborepo monorepo, TypeScript strict, ESLint 9 (incl. React-hooks rules), Vitest, Playwright, GitHub Actions CI (lint, typecheck, unit/integration, build, e2e), Docker Compose (Postgres 18, Redis, MinIO, Mailpit), zod-validated env that **refuses** dev login / placeholder secrets / missing master key in production.
+- **Auth & tenancy:** Auth.js (beta v5, JWT sessions) with email link, optional Discord/Google, dev-only demo login; organisations, game containers (teams), memberships, per-team roles, invitations (hashed tokens, 7-day expiry, email-bound), role changes with owner/manager rules and last-owner protection.
+- **RBAC & data safety:** permission matrix as data (176 generated tests + named guarantees: Player cannot read contracts, Guest cannot post, wellness default-deny, managers cannot see owner-only audit entries); **Postgres RLS** on every tenant table with a non-superuser runtime role; tests run **as that role** and prove cross-tenant reads/writes fail; append-only, **hash-chained audit log** with tamper detection; `defineRoute` (authn → CSRF/origin → rate limit → membership → permission → validation) with an architecture test that fails if any API route bypasses it.
+- **Minors:** date of birth captured, guardian-consent request + public consent page, gated-feature policy (`featureAllowedForUser`), shell banner.
+- **Game Modules:** SDK contract + conformance suite; six modules (data only) with accent themes verified for WCAG contrast; codegen registry, with a test proving a 7th game is discovered from a new folder alone; EA FC edition modelled as data (FC 27 current).
+- **Design system:** token source of truth in TS → generated CSS (dark primary, light supported, per-game accent as registered `@property` so it morphs); 36 contrast tests + a drift test (that test exists because a real naming bug slipped through and the a11y e2e caught it); 18 components with loading/empty/error states; motion + theme providers with an **in-app motion setting**; Space Grotesk + Geist.
+- **App shell:** animated sidebar (`layoutId` active pill), **game-container switcher with themed flood transition**, Cmd/Ctrl-K palette, connection banner, route transitions, animated onboarding flow (profile → guardian → org → first team), overview / team home / members + invites / audit log / settings pages, each with loading, empty and error states. Seed script with clearly-labelled **DEMO DATA** org.
+- **Verification (all run on this machine):** 318 unit + integration tests, 17 Playwright tests (permissions, CSRF, onboarding, accent morph, reduced motion, axe WCAG 2.2 AA on 6 screens: **0 violations**), lint clean, typecheck clean, production build OK. Lighthouse (production build, mobile defaults): **accessibility 100, best-practices 96, performance 89–97** (team page 89, everything else ≥ 90; LCP ≈ 3.5 s under simulated slow 4G is the main remaining cost, targeted in M8).
+
+### M0: what is stubbed or deferred (honest list)
+
+- Data sources for every game show **"Not built yet"**; manual entry/CSV land in M2/M3.
+- **No realtime yet** (chat, presence, live cursors): `ConnectionBanner` reflects browser online/offline only.
+- Riot / Discord / Google OAuth buttons render only when credentials are configured; none are tested against the real providers.
+- `liquid-glass-js` spike **not done** (glass is CSS `backdrop-filter`); `liquid-logo` brand mark not produced; font pairing chosen without the planned visual spike.
+- Emails are sent inside the DB transaction (no outbox); no CSP header; `users` table is not under RLS; JWT sessions have no server-side revocation (see D-33, D-40).
+- Data export / account deletion UI, wellness check-ins, goals, 1:1 notes (brief §5.8) are **not built**; scheduled into M2.
+- CI workflow is written but **has not run on GitHub** (no remote configured); the same steps pass locally.
+- `ruflo` intentionally not installed; `superpowers` requires you to run `/plugin install superpowers@claude-plugins-official` in an interactive session.
+
+### Next: M1, Comms + presence
+
+`apps/realtime` (Fastify + Socket.IO + Redis adapter), channels / threads / DMs / mentions / reactions / pins, structured message types (scrim request, poll, review request, feedback card), presence, notification centre + rules, offline action queue, FTS search v1, Discord history import. Before starting: add a `session_version` claim so realtime tickets can be revoked; decide Auth.js beta vs. alternatives (D-33).

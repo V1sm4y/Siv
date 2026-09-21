@@ -7,7 +7,7 @@ import {
   listTeams, NotFoundError, ConflictError, ValidationError, verifyAuditChain, withOrgActor,
   requestGuardianConsent, verifyGuardianConsent, guardianStatusFor, completeProfile,
 } from './index';
-import { join, joinTeam, makeOrg, makeTeam, makeUser, testDbs } from './test/helpers';
+import { join, joinTeam, makeTeam, makeUser, testDbs } from './test/helpers';
 
 const dbs = testDbs();
 const { admin, app } = dbs;
