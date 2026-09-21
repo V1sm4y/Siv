@@ -321,6 +321,8 @@ Discord relay (keep import) → Google/Outlook calendar OAuth sync (keep ICS) �
 
 ## 13. Open questions (max 5 — defaults apply if unanswered)
 
+**Resolved 2026-09-21:** Q1 Auth.js · Q3 India-first hosting · Q4 minors supported (guardian consent in M0) · Q5 skip ruflo. **Still open:** Q2 (Riot developer account) — proceeding with the mock + CSV default.
+
 | # | Question | Default I will use |
 |---|---|---|
 | Q1 | **Auth: self-hosted Auth.js vs hosted Clerk?** Clerk is faster to ship but sends user identity to a US vendor (relevant to DPDP) and adds per-MAU cost; Auth.js keeps data in our DB and lets the Fastify service verify sessions directly. | Auth.js, wrapped behind `packages/authn` |
@@ -335,6 +337,6 @@ Discord relay (keep import) → Google/Outlook calendar OAuth sync (keep ICS) �
 
 | Milestone | Status | Done | Stubbed | Next |
 |---|---|---|---|---|
-| Planning | ✅ | PLAN.md, DECISIONS.md, research | — | M0 |
+| Planning | ✅ | PLAN.md, DECISIONS.md, research, Q1/Q3/Q4/Q5 resolved | — | M0 |
 | M0 | ⬜ | | | |
 | M1–M8 | ⬜ | | | |
