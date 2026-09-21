@@ -1,10 +1,13 @@
 import type { Metadata, Viewport } from 'next';
-import { Geist, Geist_Mono, Space_Grotesk } from 'next/font/google';
+import { Big_Shoulders, Geist, Geist_Mono } from 'next/font/google';
 import { NO_FLASH_SCRIPT } from '@arena/ui';
 import { Providers } from './providers';
 import './globals.css';
 
-const display = Space_Grotesk({ subsets: ['latin'], variable: '--font-display', display: 'swap' });
+// Condensed broadcast display face for titles and numerals; Geist for UI; Geist Mono for eyebrow labels.
+// display:'optional' = never swap late (no layout shift, no LCP re-paint): the preloaded font is used if it
+// arrives in time, otherwise the fallback stays for that view. Next cannot compute fallback metrics for this family.
+const display = Big_Shoulders({ subsets: ['latin'], variable: '--font-display', display: 'optional', weight: ['700', '800', '900'] });
 const sans = Geist({ subsets: ['latin'], variable: '--font-sans', display: 'swap' });
 const mono = Geist_Mono({ subsets: ['latin'], variable: '--font-mono', display: 'swap' });
 
@@ -24,7 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <a
           href="#main"
-          className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] focus:rounded-md focus:bg-surface-3 focus:px-3 focus:py-2 focus:text-sm"
+          className="sr-only text-fg focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] focus:rounded-md focus:bg-surface-3 focus:px-4 focus:py-3 focus:text-sm"
         >
           Skip to content
         </a>

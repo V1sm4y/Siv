@@ -1,6 +1,7 @@
 'use client';
 import type { OrgRole } from '@arena/authz';
-import { Avatar, Badge, Button, Dialog, DialogContent, EmptyState, Field, Input, Select, Table, Td, Th, toast } from '@arena/ui';
+import { Avatar, Badge, Button, Dialog, DialogContent, EmptyState, Field, Input, InviteArt, Select, Table, Td, Th, playCue, toast } from '@arena/ui';
+import { Section } from '@/components/page-header';
 import { getGame } from '@arena/game-registry';
 import { useMutation } from '@tanstack/react-query';
 import { MailPlus } from 'lucide-react';
@@ -12,35 +13,29 @@ interface Member { membershipId: string; name: string | null; email: string | nu
 interface Invite { id: string; email: string; orgRole: string; teamRole: string | null; expiresAt: string }
 interface Team { id: string; name: string; gameId: string }
 
-export function MembersClient({ orgId, members, invites, teams, canInviteManager }: { orgId: string; members: Member[]; invites: Invite[]; teams: Team[]; canInviteManager: boolean }) {
-  const [inviting, setInviting] = useState(false);
+export function MembersClient({ orgId, members, invites, teams, canInviteManager, initialInviteOpen = false }: { orgId: string; members: Member[]; invites: Invite[]; teams: Team[]; canInviteManager: boolean; initialInviteOpen?: boolean }) {
+  const [inviting, setInviting] = useState(initialInviteOpen);
   return (
-    <div className="flex flex-col gap-10">
-      <section aria-labelledby="members-h">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 id="members-h" className="text-sm font-medium text-fg-muted">People ({members.length})</h2>
+    <>
+      <Section label="People" hint={`${members.length} in this organisation.`}>
+        <div className="-mt-2 mb-4 flex justify-end">
           <Button size="sm" onClick={() => setInviting(true)} data-testid="invite-open"><MailPlus className="size-4" aria-hidden="true" /> Invite</Button>
         </div>
-        <div className="overflow-hidden rounded-lg border border-line bg-surface-1">
-          <Table>
-            <thead><tr><Th>Name</Th><Th>Email</Th><Th className="w-44">Organisation role</Th></tr></thead>
-            <tbody>{members.map((m) => <MemberRow key={m.membershipId} orgId={orgId} m={m} />)}</tbody>
-          </Table>
-        </div>
-      </section>
+        <Table>
+          <thead><tr><Th>Name</Th><Th>Email</Th><Th className="w-44">Organisation role</Th></tr></thead>
+          <tbody>{members.map((m) => <MemberRow key={m.membershipId} orgId={orgId} m={m} />)}</tbody>
+        </Table>
+      </Section>
 
-      <section aria-labelledby="invites-h">
-        <h2 id="invites-h" className="mb-3 text-sm font-medium text-fg-muted">Pending invitations ({invites.length})</h2>
+      <Section label="Invitations" hint="Expire after 7 days and only work for the email they were sent to.">
         {invites.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-line-strong">
-            <EmptyState title="No pending invitations" description="Invitations expire after 7 days and only work for the email address they were sent to." />
-          </div>
+          <EmptyState art={<InviteArt />} title="No pending invitations" description="Invite coaches, players and staff. They land here until they accept." className="py-8" />
         ) : (
-          <ul className="divide-y divide-line overflow-hidden rounded-lg border border-line bg-surface-1">
+          <ul className="-mt-2 divide-y divide-line">
             {invites.map((i) => (
-              <li key={i.id} className="flex items-center justify-between gap-3 p-3 text-sm">
+              <li key={i.id} className="flex items-center justify-between gap-3 py-3 text-sm">
                 <span className="truncate">{i.email}</span>
-                <span className="flex items-center gap-2">
+                <span className="flex items-center gap-3">
                   <Badge className="capitalize">{i.teamRole ?? i.orgRole}</Badge>
                   <span className="text-xs text-fg-subtle">expires {new Date(i.expiresAt).toLocaleDateString()}</span>
                 </span>
@@ -48,10 +43,10 @@ export function MembersClient({ orgId, members, invites, teams, canInviteManager
             ))}
           </ul>
         )}
-      </section>
+      </Section>
 
       <InviteDialog orgId={orgId} teams={teams} open={inviting} onOpenChange={setInviting} canInviteManager={canInviteManager} />
-    </div>
+    </>
   );
 }
 
@@ -59,8 +54,8 @@ function MemberRow({ orgId, m }: { orgId: string; m: Member }) {
   const router = useRouter();
   const mut = useMutation({
     mutationFn: (role: OrgRole) => api(`/api/orgs/${orgId}/members/${m.membershipId}`, { method: 'PATCH', body: { role } }),
-    onSuccess: () => { toast.success('Role updated'); router.refresh(); },
-    onError: (e) => toast.error(e instanceof ApiError ? e.message : 'Could not update role'),
+    onSuccess: () => { playCue('confirm'); toast.success('Role updated'); router.refresh(); },
+    onError: (e) => { playCue('error'); toast.error(e instanceof ApiError ? e.message : 'Could not update role'); },
   });
   const locked = m.allowedRoles.length <= 1;
   return (
@@ -97,7 +92,7 @@ function InviteDialog({ orgId, teams, open, onOpenChange, canInviteManager }: { 
   const game = team ? getGame(team.gameId) : null;
   const m = useMutation({
     mutationFn: () => api(`/api/orgs/${orgId}/invites`, { body: { email, orgRole, ...(orgRole === 'member' ? { teamId, teamRole } : {}) } }),
-    onSuccess: () => { toast.success(`Invitation sent to ${email}`); setEmail(''); onOpenChange(false); router.refresh(); },
+    onSuccess: () => { playCue('confirm'); toast.success(`Invitation sent to ${email}`); setEmail(''); onOpenChange(false); router.refresh(); },
   });
   const err = m.error instanceof ApiError ? m.error : null;
   return (

@@ -28,7 +28,12 @@ export function AnimatedNumber({
   return (
     <span className={className}>
       <span className="sr-only">{fmt.format(value)}</span>
-      <motion.span aria-hidden="true" className="tabular">{text}</motion.span>
+      {/* Reserve the FINAL width with an invisible copy, and draw the counting digits on top: proportional
+          digits change width every frame, which otherwise reflows neighbours (measured: CLS 0.28). */}
+      <span className="relative inline-block" aria-hidden="true">
+        <span className="tabular invisible">{fmt.format(value)}</span>
+        <motion.span className="tabular absolute top-0 left-0">{text}</motion.span>
+      </span>
     </span>
   );
 }

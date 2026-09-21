@@ -98,3 +98,15 @@ describe('audit hash chain', () => {
     expect(stableStringify({ a: 1, b: { d: 1, c: 2 } })).toBe(stableStringify({ b: { c: 2, d: 1 }, a: 1 }));
   });
 });
+
+import { lastDays } from './overview';
+describe('lastDays', () => {
+  it('returns n consecutive local days oldest-first, ending today in the given timezone', () => {
+    const now = new Date('2026-09-22T20:30:00Z'); // already 2026-09-23 in Kolkata (UTC+5:30)
+    expect(lastDays(3, 'UTC', now)).toEqual(['2026-09-20', '2026-09-21', '2026-09-22']);
+    expect(lastDays(3, 'Asia/Kolkata', now)).toEqual(['2026-09-21', '2026-09-22', '2026-09-23']);
+  });
+  it('falls back to UTC for an unknown timezone instead of throwing', () => {
+    expect(lastDays(1, 'Mars/Base', new Date('2026-01-05T00:00:00Z'))).toEqual(['2026-01-05']);
+  });
+});

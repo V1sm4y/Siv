@@ -6,7 +6,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./tokens": "./src/tokens.ts",
-    "./styles.css": "./src/styles/index.css"
+    "./styles.css": "./src/styles/index.css",
+    "./command-palette": "./src/components/command-palette.tsx"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
@@ -41,5 +42,8 @@
     "tsx": "^4.23.15",
     "@arena/game-registry": "workspace:*",
     "@arena/game-sdk": "workspace:*"
-  }
+  },
+  "sideEffects": [
+    "**/*.css"
+  ]
 }

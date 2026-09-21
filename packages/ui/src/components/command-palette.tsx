@@ -2,7 +2,7 @@
 import { Command } from 'cmdk';
 import { Search } from 'lucide-react';
 import { Dialog as D } from 'radix-ui';
-import { useEffect, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 export interface PaletteItem {
   id: string;
@@ -15,20 +15,6 @@ export interface PaletteItem {
 export interface PaletteGroup {
   heading: string;
   items: PaletteItem[];
-}
-
-/** Cmd/Ctrl+K toggles the palette from anywhere. */
-export function useCommandPaletteShortcut(toggle: () => void) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key.toLowerCase() === 'k' && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        toggle();
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [toggle]);
 }
 
 export function CommandPalette({

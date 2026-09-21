@@ -21,15 +21,15 @@ export interface Palette {
 }
 
 export const dark: Palette = {
-  surface0: '#0A0B0F',
-  surface1: '#0F1117',
-  surface2: '#151821',
-  surface3: '#1C202B',
-  line: '#242937',
-  lineStrong: '#5F687D',
-  fg: '#F2F4F8',
-  fgMuted: '#A9B1C3',
-  fgSubtle: '#8089A0',
+  surface0: '#07080C', // the base plane
+  surface1: '#0B0D13', // sidebars, sticky bars
+  surface2: '#11141C', // hover / raised rows
+  surface3: '#181C27', // popovers, selected
+  line: '#1D2230',
+  lineStrong: '#5A6378',
+  fg: '#F3F5FA',
+  fgMuted: '#A3ACBF',
+  fgSubtle: '#7D869C',
   danger: '#FF7B7B',
   success: '#43E0A0',
   warning: '#FFB454',
@@ -52,7 +52,7 @@ export const light: Palette = {
   info: '#0B57C8',
 };
 
-export const radius = { sm: '6px', md: '10px', lg: '14px', xl: '20px', full: '9999px' } as const;
+export const radius = { sm: '4px', md: '8px', lg: '12px', xl: '18px', full: '9999px' } as const;
 
 export const spacing = { 0: '0', 1: '4px', 2: '8px', 3: '12px', 4: '16px', 5: '20px', 6: '24px', 8: '32px', 10: '40px', 12: '48px', 16: '64px' } as const;
 
@@ -93,6 +93,8 @@ export const typeScale = {
   '2xl': ['1.75rem', '2.125rem'],
   '3xl': ['2.25rem', '2.5rem'],
   '4xl': ['3rem', '3.25rem'],
+  '5xl': ['4rem', '3.75rem'],
+  '6xl': ['5.5rem', '4.75rem'],
 } as const;
 
 /** Neutral org-level accent (no game selected). Same contrast rules as the game themes. */

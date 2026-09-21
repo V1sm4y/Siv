@@ -9,7 +9,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ org: 
   const ctx = await loadOrgContext(slug);
   return (
     <>
-      <PageHeader title="Settings" description="Preferences for you on this device." />
+      <PageHeader eyebrow="You" title="Settings" description="Preferences for you on this device." />
       <SettingsClient
         account={{ name: ctx.user.name, email: ctx.user.email, timezone: ctx.user.timezone, role: ctx.role }}
         guardian={ctx.guardian}

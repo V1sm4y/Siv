@@ -9,7 +9,8 @@ import { Check } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState, useSyncExternalStore } from 'react';
 import { AmbientGradient } from '@/components/effects/ambient-gradient';
-import { Wordmark } from '@/components/wordmark';
+import { LiquidGlass } from '@/components/effects/liquid-glass';
+import { LiquidMark } from '@/components/effects/liquid-mark';
 import { api, ApiError } from '@/lib/api';
 
 const subscribeNever = () => () => {};
@@ -63,10 +64,13 @@ export function OnboardingFlow({ initialStep, next, existingOrg, defaultName }: 
   };
 
   return (
-    <main id="main" data-game={game?.id} className="relative flex min-h-dvh flex-col items-center px-4 py-10">
-      <AmbientGradient colors={gradient} />
+    <main id="main" data-game={game?.id} className="relative isolate flex min-h-dvh flex-col items-center px-4 py-10">
+      <AmbientGradient colors={gradient} preserveBuffer className="-z-10" />
       <header className="relative z-10 flex w-full max-w-xl items-center justify-between">
-        <Wordmark />
+        <span className="flex items-center gap-3 font-display text-[1.65rem] leading-none font-extrabold tracking-wide uppercase">
+          <LiquidMark size={40} tint={game?.theme.accent ?? brandTheme.accent} />
+          Arena<span className="-ml-2 text-fg-subtle">&nbsp;OS</span>
+        </span>
         <ol className="flex items-center gap-2" aria-label="Progress">
           {shown.map((s) => (
             <li key={s} aria-current={s === step ? 'step' : undefined} className="flex items-center gap-2 text-xs">
@@ -78,7 +82,7 @@ export function OnboardingFlow({ initialStep, next, existingOrg, defaultName }: 
       </header>
 
       <div className="relative z-10 flex w-full max-w-xl flex-1 items-center py-10">
-        <div className="glass w-full rounded-xl p-6 sm:p-8">
+        <LiquidGlass className="w-full p-6 sm:p-8" radius={20}>
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={step}
@@ -96,7 +100,7 @@ export function OnboardingFlow({ initialStep, next, existingOrg, defaultName }: 
               {step === 'done' && org && <DoneStep slug={org.slug} />}
             </motion.div>
           </AnimatePresence>
-        </div>
+        </LiquidGlass>
       </div>
     </main>
   );
@@ -105,7 +109,7 @@ export function OnboardingFlow({ initialStep, next, existingOrg, defaultName }: 
 function Heading({ title, sub }: { title: string; sub: string }) {
   return (
     <div className="mb-6">
-      <h1 className="font-display text-2xl font-semibold">{title}</h1>
+      <h1 className="title text-4xl">{title}</h1>
       <p className="mt-1 text-sm text-fg-muted">{sub}</p>
     </div>
   );

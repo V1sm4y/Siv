@@ -8,7 +8,7 @@ export default tseslint.config(
     ignores: [
       '**/node_modules/**', '**/.next/**', '**/dist/**', '**/.turbo/**', '**/coverage/**',
       '**/generated.ts', '**/*.generated.css', 'packages/db/drizzle/**', 'playwright-report/**', 'test-results/**',
-      '.claude/**', 'apps/web/next-env.d.ts',
+      '.claude/**', 'apps/web/next-env.d.ts', 'apps/web/src/vendor/**',
     ],
   },
   js.configs.recommended,

@@ -1,15 +1,30 @@
 'use client';
 import { ShaderGradient, ShaderGradientCanvas } from '@shadergradient/react';
 
-export default function ShaderLayer({ colors, animate }: { colors: readonly [string, string, string]; animate: boolean }) {
+export default function ShaderLayer({
+  colors,
+  animate,
+  preserveBuffer,
+}: {
+  colors: readonly [string, string, string];
+  animate: boolean;
+  preserveBuffer?: boolean;
+}) {
   return (
-    <ShaderGradientCanvas pixelDensity={1} fov={45} pointerEvents="none" lazyLoad style={{ position: 'absolute', inset: 0 }}>
+    <ShaderGradientCanvas
+      pixelDensity={1}
+      fov={45}
+      pointerEvents="none"
+      lazyLoad
+      preserveDrawingBuffer={preserveBuffer}
+      style={{ position: 'absolute', inset: 0 }}
+    >
       <ShaderGradient
         control="props"
         type="waterPlane"
         animate={animate ? 'on' : 'off'}
-        uSpeed={0.12}
-        uStrength={2.2}
+        uSpeed={0.1}
+        uStrength={2.4}
         uDensity={1.1}
         uFrequency={5.5}
         color1={colors[0]}
@@ -17,7 +32,7 @@ export default function ShaderLayer({ colors, animate }: { colors: readonly [str
         color3={colors[2]}
         // '3d' lighting avoids fetching remote HDR environment maps (privacy + CSP friendly).
         lightType="3d"
-        brightness={0.9}
+        brightness={0.7}
         grain="off"
         reflection={0.1}
         cAzimuthAngle={180}

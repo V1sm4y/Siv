@@ -5,12 +5,15 @@ import { cn } from '../cn';
 /** Every screen needs an empty state that says what this is, why it's empty, and what to do. */
 export function EmptyState({
   icon,
+  art,
   title,
   description,
   action,
   className,
 }: {
   icon?: ReactNode;
+  /** Decorative illustration (see illustrations.tsx). Replaces the icon disc. */
+  art?: ReactNode;
   title: string;
   description?: string;
   action?: ReactNode;
@@ -18,9 +21,13 @@ export function EmptyState({
 }) {
   return (
     <div className={cn('flex flex-col items-center gap-3 px-6 py-14 text-center', className)}>
-      <div className="grid size-12 place-items-center rounded-full border border-line-strong bg-surface-2 text-fg-muted" aria-hidden="true">
-        {icon ?? <Inbox className="size-5" />}
-      </div>
+      {art ? (
+        <div className="h-24 w-32 text-fg-muted" aria-hidden="true">{art}</div>
+      ) : (
+        <div className="grid size-12 place-items-center rounded-full border border-line-strong bg-surface-2 text-fg-muted" aria-hidden="true">
+          {icon ?? <Inbox className="size-5" />}
+        </div>
+      )}
       <h3 className="font-display text-lg font-semibold">{title}</h3>
       {description && <p className="max-w-sm text-sm text-fg-muted">{description}</p>}
       {action}

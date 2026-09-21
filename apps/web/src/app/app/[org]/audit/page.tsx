@@ -1,22 +1,15 @@
 import { can } from '@arena/authz';
 import { listAudit, verifyAuditChain, withOrgActor } from '@arena/domain';
 import { users } from '@arena/db';
-import { Badge, EmptyState, ErrorState, Table, Td, Th } from '@arena/ui';
+import { Badge, EmptyState, ErrorState, LedgerArt } from '@arena/ui';
 import { inArray } from 'drizzle-orm';
-import { ScrollText, ShieldCheck, ShieldAlert } from 'lucide-react';
-import { PageHeader } from '@/components/page-header';
+import { ShieldCheck, ShieldAlert } from 'lucide-react';
+import { PageHeader, Section } from '@/components/page-header';
+import { actionLabel } from '@/lib/format';
 import { getDb } from '@/server/db';
 import { loadOrgContext } from '@/server/shell';
 
 export const metadata = { title: 'Audit log' };
-
-const LABELS: Record<string, string> = {
-  'org.create': 'Created the organisation',
-  'team.create': 'Created a game container',
-  'invite.create': 'Sent an invitation',
-  'invite.accept': 'Accepted an invitation',
-  'member.role_change': 'Changed a member’s role',
-};
 
 export default async function AuditPage({ params }: { params: Promise<{ org: string }> }) {
   const { org: slug } = await params;
@@ -33,11 +26,21 @@ export default async function AuditPage({ params }: { params: Promise<{ org: str
   const names = new Map((ids.length ? await db.select({ id: users.id, name: users.name, email: users.email }).from(users).where(inArray(users.id, ids)) : []).map((u) => [u.id, u.name ?? u.email ?? 'Unknown']));
   // Managers cannot see owner-only rows, so their window is not a contiguous chain: only owners get the integrity check.
   const chain = isOwner && entries.length > 0 ? verifyAuditChain([...entries].reverse()) : null;
-  const fmt = new Intl.DateTimeFormat('en', { dateStyle: 'medium', timeStyle: 'short', timeZone: ctx.user.timezone });
+  const dayFmt = new Intl.DateTimeFormat('en', { weekday: 'long', day: 'numeric', month: 'long', timeZone: ctx.user.timezone });
+  const timeFmt = new Intl.DateTimeFormat('en', { hour: '2-digit', minute: '2-digit', timeZone: ctx.user.timezone });
+  // Group consecutive entries by local day (entries arrive newest first).
+  const groups: { day: string; rows: typeof entries }[] = [];
+  for (const e of entries) {
+    const day = dayFmt.format(e.createdAt);
+    const last = groups.at(-1);
+    if (last?.day === day) last.rows.push(e);
+    else groups.push({ day, rows: [e] });
+  }
 
   return (
     <>
       <PageHeader
+        eyebrow="Organisation"
         title="Audit log"
         description="Sensitive actions in this organisation. Entries are append-only and hash-chained so tampering is detectable."
         actions={
@@ -50,23 +53,24 @@ export default async function AuditPage({ params }: { params: Promise<{ org: str
         }
       />
       {entries.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-line-strong"><EmptyState icon={<ScrollText className="size-5" />} title="Nothing recorded yet" description="Actions like inviting people or changing roles will appear here." /></div>
+        <EmptyState art={<LedgerArt />} title="Nothing recorded yet" description="Actions like inviting people or changing roles will appear here." />
       ) : (
-        <div className="overflow-hidden rounded-lg border border-line bg-surface-1">
-          <Table>
-            <thead><tr><Th>When</Th><Th>Who</Th><Th>Action</Th><Th>Details</Th></tr></thead>
-            <tbody>
-              {entries.map((e) => (
-                <tr key={e.id}>
-                  <Td className="whitespace-nowrap text-fg-muted"><time dateTime={e.createdAt.toISOString()}>{fmt.format(e.createdAt)}</time></Td>
-                  <Td>{e.actorUserId ? names.get(e.actorUserId) ?? 'Unknown' : 'System'}</Td>
-                  <Td>{LABELS[e.action] ?? e.action}</Td>
-                  <Td className="text-xs text-fg-muted">{Object.entries(e.metadata).map(([k, v]) => `${k}: ${String(v)}`).join(' · ')}</Td>
-                </tr>
+        groups.map((g) => (
+          <Section key={g.day} label={g.day} hint={`${g.rows.length} ${g.rows.length === 1 ? 'entry' : 'entries'}`}>
+            <ol className="-mt-2 divide-y divide-line">
+              {g.rows.map((e) => (
+                <li key={e.id} className="grid grid-cols-[3.5rem_1fr] gap-4 py-3 text-sm sm:grid-cols-[3.5rem_14rem_1fr]">
+                  <time className="text-fg-subtle tabular" dateTime={e.createdAt.toISOString()}>{timeFmt.format(e.createdAt)}</time>
+                  <span>
+                    <span className="text-fg">{e.actorUserId ? names.get(e.actorUserId) ?? 'Unknown' : 'System'}</span>
+                    <span className="block text-fg-muted">{actionLabel(e.action)}</span>
+                  </span>
+                  <span className="col-span-2 text-xs text-fg-subtle sm:col-span-1">{Object.entries(e.metadata).map(([k, v]) => `${k}: ${String(v)}`).join(' · ')}</span>
+                </li>
               ))}
-            </tbody>
-          </Table>
-        </div>
+            </ol>
+          </Section>
+        ))
       )}
     </>
   );

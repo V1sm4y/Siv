@@ -339,6 +339,7 @@ Discord relay (keep import) → Google/Outlook calendar OAuth sync (keep ICS) �
 |---|---|
 | Planning | ✅ Done |
 | **M0 Foundation** | ✅ **Done (2026-09-21)**: see below |
+| **UI redesign pass** | ✅ **Done (2026-09-22)**: see below |
 | M1–M8 | ⬜ Not started |
 
 ### M0: what is done
@@ -362,6 +363,20 @@ Discord relay (keep import) → Google/Outlook calendar OAuth sync (keep ICS) �
 - Data export / account deletion UI, wellness check-ins, goals, 1:1 notes (brief §5.8) are **not built**; scheduled into M2.
 - CI workflow is written but **has not run on GitHub** (no remote configured); the same steps pass locally.
 - `ruflo` intentionally not installed; `superpowers` requires you to run `/plugin install superpowers@claude-plugins-official` in an interactive session.
+
+### UI redesign pass (2026-09-22): what is done
+
+Route: full rebuild of the visual layer (thesis "liquid broadcast console"). See `docs/DESIGN_QA.md` for the checklist and measurements, `docs/PREMIUM_ROADMAP.md` + `docs/RISKS.md` for the premium plan (awaiting your review), `CHANGELOG.md` for user-facing notes.
+
+- **Repos used:** `react-three-fiber` (liquid mark canvas), `shadergradient` (sign-in/onboarding field), **`liquid-logo`** (shader ported to R3F with a procedural hexagon mask, tinted per game), **`liquid-glass-js`** (vendored `container.js` with a `destroy()` leak fix and `html2canvas-pro`, on sign-in/onboarding only, CSS fallback). Skills used: `ui-aesthetics` (thesis, non-card layouts, restraint), `dataviz` (sparkline/bars/role-coverage specs). `superpowers` was not installable from here; `ruflo` skipped by decision.
+- **New:** condensed display type + mono eyebrows, obsidian palette, non-card section layout, signature intro (2.4 s, skippable), per-game background art + themed switch transition, sparkline/bar/role-coverage components on **real** data (`getOrgOverview`, tested against RLS), empty-state art, command palette 2.0 (actions, recents, `g`-chords), opt-in synthesized sound.
+- **Verified:** 321 unit/integration tests, 30 Playwright tests (incl. intro skip/auto-dismiss/reduced-motion, sound opt-in, palette actions, glass fallback, light-theme axe), lint, typecheck, production build. Lighthouse: a11y 100, best-practices 96, CLS 0, perf 89–91; **LCP 2.9–3.8 s misses the 2.0 s target**.
+
+### Redesign: stubbed / not done
+
+- Tier 1 features are **not started** (waiting for your review of the roadmap). Not built: customisable dashboards, Season Wrapped, undo/version history, guided onboarding checklists.
+- Onboarding and Join/Guardian pages are not in the axe sweep; no human screen-reader or colour-blind-simulation pass yet.
+- Intro/hero moments are judged from screenshots and automated tests; frame-rate on real GPUs was not measured.
 
 ### Next: M1, Comms + presence
 

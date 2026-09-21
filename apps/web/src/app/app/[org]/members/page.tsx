@@ -9,8 +9,9 @@ import { MembersClient } from './members-client';
 export const metadata = { title: 'Members' };
 const ROLES: OrgRole[] = ['owner', 'manager', 'member', 'guest'];
 
-export default async function MembersPage({ params }: { params: Promise<{ org: string }> }) {
+export default async function MembersPage({ params, searchParams }: { params: Promise<{ org: string }>; searchParams: Promise<{ invite?: string }> }) {
   const { org: slug } = await params;
+  const sp = await searchParams;
   const ctx = await loadOrgContext(slug);
   if (!ctx.canManage) {
     return <ErrorState title="You don’t have access to member management" description="Only owners and managers can manage members and invitations." />;
@@ -23,8 +24,9 @@ export default async function MembersPage({ params }: { params: Promise<{ org: s
 
   return (
     <>
-      <PageHeader title="Members" description="Everyone in the organisation, and pending invitations." />
+      <PageHeader eyebrow="Organisation" title="Members" description="Everyone in the organisation, and pending invitations." />
       <MembersClient
+        initialInviteOpen={sp.invite === '1'}
         orgId={ctx.org.id}
         canInviteManager={ctx.role === 'owner'}
         teams={ctx.teams.map((t) => ({ id: t.id, name: t.name, gameId: t.gameId }))}

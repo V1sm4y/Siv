@@ -213,3 +213,37 @@ describe('minors and guardian consent', () => {
     expect(r.minor).toBe(true);
   });
 });
+
+import { getOrgOverview } from './overview';
+import { withOrgActor as withActor } from './scope';
+
+describe('overview is built from real rows only', () => {
+  it('counts members, pending invites and audit activity; hides sections the caller may not see', async () => {
+    const owner = await makeUser(admin, 'ov-owner');
+    const player = await makeUser(admin, 'ov-player');
+    const org = await createOrganization(app.db, { userId: owner.id, name: 'Overview Org' });
+    const team = await withActor(app.db, { userId: owner.id, orgId: org.id }, (s) => createTeam(s, { name: 'Val', gameId: 'valorant' }));
+    await join(admin, org.id, player.id, 'member');
+    await joinTeam(admin, org.id, team.id, player.id, 'player');
+    await withActor(app.db, { userId: owner.id, orgId: org.id }, (s) => createInvite(s, { email: 'x@y.co', orgRole: 'guest' }));
+
+    const asOwner = await withActor(app.db, { userId: owner.id, orgId: org.id }, (s) =>
+      getOrgOverview(s, { teamIds: [team.id], timeZone: 'UTC' }),
+    );
+    expect(asOwner.rosterCounts[team.id]).toBe(1);
+    expect(asOwner.management).toMatchObject({ memberCount: 2, pendingInvites: 1 });
+    expect(asOwner.management?.roleCounts.map((r) => r.role).sort()).toEqual(['member', 'owner']);
+    // org.create + team.create + invite.create = 3 audit rows today
+    expect(asOwner.activity?.total).toBe(3);
+    expect(asOwner.activity?.days).toHaveLength(14);
+    expect(asOwner.activity?.days.at(-1)?.count).toBe(3);
+    expect(asOwner.activity?.recent[0]?.action).toBe('invite.create');
+
+    const asPlayer = await withActor(app.db, { userId: player.id, orgId: org.id, teamId: team.id }, (s) =>
+      getOrgOverview(s, { teamIds: [team.id], timeZone: 'UTC' }),
+    );
+    expect(asPlayer.rosterCounts[team.id]).toBe(1);
+    expect(asPlayer.management).toBeNull(); // not zeros: absent
+    expect(asPlayer.activity).toBeNull();
+  });
+});

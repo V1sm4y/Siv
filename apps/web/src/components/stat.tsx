@@ -1,11 +1,20 @@
 'use client';
 import { AnimatedNumber } from '@arena/ui';
+import type { ReactNode } from 'react';
 
-export function Stat({ label, value }: { label: string; value: number }) {
+export function Stat({ label, value, suffix, children }: { label: string; value?: number; suffix?: string; children?: ReactNode }) {
   return (
     <div>
-      <dt className="text-xs tracking-wide text-fg-subtle uppercase">{label}</dt>
-      <dd className="mt-1 font-display text-3xl font-semibold"><AnimatedNumber value={value} /></dd>
+      <dt className="eyebrow">{label}</dt>
+      <dd className="mt-3">
+        {value !== undefined && (
+          <span className="title text-6xl">
+            <AnimatedNumber value={value} />
+            {suffix && <span className="ml-2 text-lg text-fg-subtle normal-case">{suffix}</span>}
+          </span>
+        )}
+        {children}
+      </dd>
     </div>
   );
 }

@@ -1,54 +1,46 @@
 'use client';
-import { Badge, useMotionStore, useThemeStore, cn, type MotionPreference, type ThemePreference } from '@arena/ui';
+import { Badge, Button, cn, playCue, useMotionStore, useSoundStore, useThemeStore, type MotionPreference, type ThemePreference } from '@arena/ui';
+import { Section } from '@/components/page-header';
 
-function Choice<T extends string>({ legend, hint, value, options, onChange }: { legend: string; hint: string; value: T; options: [T, string][]; onChange: (v: T) => void }) {
+function Choice<T extends string>({ legend, value, options, onChange }: { legend: string; value: T; options: [T, string][]; onChange: (v: T) => void }) {
   return (
-    <fieldset className="border-t border-line py-6">
-      <legend className="sr-only">{legend}</legend>
-      <div className="grid gap-4 sm:grid-cols-[1fr_2fr]">
-        <div>
-          <p className="text-sm font-medium" aria-hidden="true">{legend}</p>
-          <p className="mt-1 text-sm text-fg-muted">{hint}</p>
-        </div>
-        <div role="radiogroup" aria-label={legend} className="flex flex-wrap gap-2">
-          {options.map(([v, label]) => (
-            <button
-              key={v}
-              type="button"
-              role="radio"
-              aria-checked={value === v}
-              onClick={() => onChange(v)}
-              className={cn('rounded-md border px-4 py-2 text-sm transition-colors', value === v ? 'border-accent bg-accent/10 text-fg' : 'border-line-strong text-fg-muted hover:bg-surface-2 hover:text-fg')}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      </div>
-    </fieldset>
+    <div role="radiogroup" aria-label={legend} className="flex flex-wrap gap-2">
+      {options.map(([v, label]) => (
+        <button
+          key={v}
+          type="button"
+          role="radio"
+          aria-checked={value === v}
+          onClick={() => onChange(v)}
+          className={cn('rounded-sm border px-4 py-2 text-sm transition-colors', value === v ? 'border-accent bg-accent/10 text-fg' : 'border-line-strong text-fg-muted hover:bg-surface-2 hover:text-fg')}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
   );
 }
 
 export function SettingsClient({ account, guardian }: { account: { name: string | null; email: string | null; timezone: string; role: string }; guardian: { minor: boolean; verified: boolean; pending: boolean } }) {
   const theme = useThemeStore();
   const motion = useMotionStore();
+  const sound = useSoundStore();
   return (
-    <div className="max-w-3xl">
-      <section aria-labelledby="appearance-h">
-        <h2 id="appearance-h" className="mb-1 text-sm font-medium text-fg-muted">Appearance</h2>
-        <Choice<ThemePreference> legend="Theme" hint="Dark is the default." value={theme.preference} onChange={theme.setPreference} options={[['dark', 'Dark'], ['light', 'Light'], ['system', 'System']]} />
-        <Choice<MotionPreference>
-          legend="Motion"
-          hint="Reduced motion removes movement and animated backgrounds; state changes stay instant and clear."
-          value={motion.preference}
-          onChange={motion.setPreference}
-          options={[['system', 'Follow system'], ['full', 'Full motion'], ['reduced', 'Reduced motion']]}
-        />
-      </section>
-
-      <section aria-labelledby="account-h" className="mt-8">
-        <h2 id="account-h" className="mb-1 text-sm font-medium text-fg-muted">Account</h2>
-        <dl className="divide-y divide-line border-t border-line text-sm">
+    <>
+      <Section label="Theme" hint="Dark is the default.">
+        <Choice<ThemePreference> legend="Theme" value={theme.preference} onChange={theme.setPreference} options={[['dark', 'Dark'], ['light', 'Light'], ['system', 'System']]} />
+      </Section>
+      <Section label="Motion" hint="Reduced motion removes movement, the intro and animated backgrounds. State changes stay instant and clear.">
+        <Choice<MotionPreference> legend="Motion" value={motion.preference} onChange={motion.setPreference} options={[['system', 'Follow system'], ['full', 'Full motion'], ['reduced', 'Reduced motion']]} />
+      </Section>
+      <Section label="Sound" hint="Subtle cues for confirmations and switching containers. Off by default.">
+        <div className="flex flex-wrap items-center gap-3">
+          <Choice<'off' | 'on'> legend="Interface sounds" value={sound.enabled ? 'on' : 'off'} onChange={(v) => sound.setEnabled(v === 'on')} options={[['off', 'Off'], ['on', 'On']]} />
+          <Button variant="ghost" size="sm" disabled={!sound.enabled} onClick={() => playCue('notify')}>Preview</Button>
+        </div>
+      </Section>
+      <Section label="Account">
+        <dl className="-mt-2 divide-y divide-line text-sm">
           {[['Name', account.name ?? '—'], ['Email', account.email ?? '—'], ['Timezone', account.timezone], ['Organisation role', account.role]].map(([k, v]) => (
             <div key={k} className="grid grid-cols-[1fr_2fr] gap-4 py-3"><dt className="text-fg-muted">{k}</dt><dd className="capitalize">{v}</dd></div>
           ))}
@@ -59,8 +51,8 @@ export function SettingsClient({ account, guardian }: { account: { name: string 
             </div>
           )}
         </dl>
-        <p className="mt-4 text-sm text-fg-subtle">Data export and account deletion are not built yet; they arrive with the privacy tooling milestone.</p>
-      </section>
-    </div>
+        <p className="mt-4 text-sm text-fg-subtle">Data export and account deletion are not built yet; they arrive with the security suite.</p>
+      </Section>
+    </>
   );
 }
