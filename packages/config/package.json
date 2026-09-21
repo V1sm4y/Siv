@@ -1,0 +1,21 @@
+{
+  "name": "@arena/config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "vitest": "^5.0.1",
+    "typescript": "~5.9.3",
+    "@types/node": "^24.0.0"
+  }
+}

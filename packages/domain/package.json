@@ -1,0 +1,25 @@
+{
+  "name": "@arena/domain",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@arena/db": "workspace:*",
+    "@arena/authz": "workspace:*",
+    "@arena/game-registry": "workspace:*",
+    "@arena/schemas": "workspace:*",
+    "drizzle-orm": "^0.45.3"
+  },
+  "devDependencies": {
+    "vitest": "^5.0.1",
+    "typescript": "~5.9.3",
+    "@types/node": "^24.0.0"
+  }
+}

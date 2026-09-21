@@ -1,0 +1,14 @@
+node_modules
+.next
+dist
+.turbo
+coverage
+.env
+.env.local
+*.tsbuildinfo
+playwright-report
+test-results
+.DS_Store
+# generated
+packages/game-registry/src/generated.ts
+packages/ui/src/styles/tokens.generated.css

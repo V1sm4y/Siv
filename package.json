@@ -1,0 +1,38 @@
+{
+  "name": "arena-os",
+  "private": true,
+  "version": "0.0.0",
+  "packageManager": "pnpm@12.5.1",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "pnpm gen:modules && pnpm gen:tokens && turbo run dev --filter=@arena/web",
+    "build": "pnpm gen:modules && pnpm gen:tokens && turbo run build",
+    "typecheck": "pnpm gen:modules && pnpm gen:tokens && turbo run typecheck",
+    "lint": "eslint .",
+    "test": "turbo run test",
+    "test:e2e": "playwright test",
+    "gen:modules": "node tooling/gen-modules.mjs",
+    "gen:tokens": "pnpm --filter @arena/ui gen:tokens",
+    "db:generate": "pnpm --filter @arena/db generate",
+    "db:migrate": "pnpm --filter @arena/db migrate",
+    "seed": "pnpm --filter @arena/db seed",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "typescript": "~5.9.3",
+    "turbo": "^2.11.2",
+    "eslint": "^9.39.0",
+    "@eslint/js": "^9.39.0",
+    "typescript-eslint": "^8.70.1",
+    "globals": "^17.12.0",
+    "prettier": "^3.9.8",
+    "vitest": "^5.0.1",
+    "@playwright/test": "^1.63.0",
+    "@axe-core/playwright": "^4.13.0",
+    "tsx": "^4.23.15",
+    "@types/node": "^24.0.0",
+    "eslint-config-next": "^16.3.5"
+  }
+}
