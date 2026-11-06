@@ -159,8 +159,15 @@ def _print_result(result: dict[str, Any], source: str) -> None:
         for hint in failure_hints(failures):
             print(f"             hint: {hint}")
     if result.get("palette"):
-        names = ", ".join(item["name"] for item in result["palette"])
-        print(f"  Palette    {names}")
+        print("  Colors that suit you:")
+        for item in result["palette"]:
+            sq = _color_square(item.get("rgb", [128, 128, 128]))
+            print(f"             [{sq}] {item['name']:<16} {item.get('hex', '')}")
+    styling = result.get("styling")
+    if styling:
+        print(f"  Styling    {styling['summary']}")
+        print(f"             Best metals: {', '.join(styling['best_metals'])}")
+        print(f"             Avoid: {', '.join(styling['avoid'])}")
     for note in result.get("notes", []):
         print(f"  Note       {note}")
 

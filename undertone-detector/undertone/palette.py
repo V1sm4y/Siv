@@ -14,16 +14,19 @@ from typing import Any, Iterable, Sequence
 
 import numpy as np
 
-from .color import delta_e_ciede2000, linear_rgb_to_lab, srgb_to_linear
+from .color import delta_e_ciede2000, lab_to_srgb, linear_rgb_to_lab, srgb_to_linear
 
 DEPTHS = ("light", "medium", "deep")
-UNDERTONES = ("warm", "cool", "neutral")
+UNDERTONES = ("warm", "cool", "neutral", "olive")
 
 _UNDERTONE_ALIASES = {
     "warm": "warm",
     "cool": "cool",
     "neutral": "neutral",
-    "olive": "neutral",
+    "olive": "olive",
+    "warm-olive": "olive",
+    "neutral-olive": "olive",
+    "cool-olive": "olive",
 }
 
 
@@ -36,9 +39,14 @@ class PaletteColor:
     tolerance: float
 
     def to_dict(self) -> dict[str, Any]:
+        srgb = lab_to_srgb(self.lab)
+        rgb_255 = np.clip(np.round(srgb * 255.0), 0, 255).astype(int)
+        hex_code = f"#{int(rgb_255[0]):02X}{int(rgb_255[1]):02X}{int(rgb_255[2]):02X}"
         return {
             "name": self.name,
             "lab": [float(v) for v in self.lab],
+            "hex": hex_code,
+            "rgb": [int(rgb_255[0]), int(rgb_255[1]), int(rgb_255[2])],
             "tolerance": float(self.tolerance),
             "undertone": self.undertone,
             "depth": self.depth,
@@ -121,10 +129,17 @@ class Palette:
         return cls(payload["palettes"], float(payload.get("tolerance_default", 12.0)))
 
     def colors(self, undertone: str, depth: str) -> list[PaletteColor]:
-        key = (normalize_undertone(undertone), normalize_depth(depth))
+        u = normalize_undertone(undertone)
+        d = normalize_depth(depth)
+        key = (u, d)
         if key not in self._colors:
+            if u == "olive" and ("neutral", d) in self._colors:
+                return list(self._colors[("neutral", d)])
             raise KeyError(f"no palette for {key}")
         return list(self._colors[key])
+
+    def styling_advice(self, undertone: str, depth: str) -> dict[str, Any]:
+        return styling_recommendations(undertone, depth)
 
     def suggest(self, undertone: str, depth: str, limit: int | None = None) -> list[dict[str, Any]]:
         colors = self.colors(undertone, depth)
@@ -295,3 +310,66 @@ def dominant_colors(
         }
         for i in order
     ]
+
+
+def styling_recommendations(undertone: str, depth: str) -> dict[str, Any]:
+    """Styling advice, flattering color families, best metals, and colors to avoid."""
+    u = normalize_undertone(undertone)
+    d = normalize_depth(depth)
+
+    advice_map = {
+        "warm": {
+            "summary": "Warm undertones glow in golden, earthy, and sun-kissed colors with yellow and red undertones.",
+            "flattering_families": [
+                "Warm Earths (Terracotta, Rust, Camel)",
+                "Sunlit Golds & Rich Mustards",
+                "Warm Corals, Peaches & Apricot",
+                "Warm Olives & Golden Moss Greens",
+                "Warm Cream & Ivory over Stark White",
+            ],
+            "best_metals": ["Yellow Gold", "Brass", "Warm Copper", "Bronze"],
+            "avoid": ["Icy Blues", "Harsh Stark White", "Cool Pastel Silver", "Neon Fuchsia"],
+        },
+        "cool": {
+            "summary": "Cool undertones look vibrant and refreshed in jewel tones, crisp icy shades, and blue-based colors.",
+            "flattering_families": [
+                "Vibrant Jewel Tones (Emerald, Sapphire, Ruby)",
+                "Deep Navy & Midnight Blues",
+                "Crisp Pure White & Slate Grey",
+                "Plum, Magenta & Berry Tones",
+                "Cool Rose & Icy Pastels",
+            ],
+            "best_metals": ["Silver", "Platinum", "White Gold"],
+            "avoid": ["Mustard Yellow", "Warm Orange & Terracotta", "Muddy Yellow-Browns", "Chartreuse"],
+        },
+        "neutral": {
+            "summary": "Neutral undertones have balanced coolness and warmth, carrying soft, muted, and medium-saturation shades with ease.",
+            "flattering_families": [
+                "Muted Teals & Seafoam",
+                "Dusty Rose & Soft Coral",
+                "Sage & Soft Jade",
+                "Charcoal & Slate",
+                "Off-White & Soft Taupe",
+            ],
+            "best_metals": ["Rose Gold", "Soft Brushed Gold", "Brushed Silver"],
+            "avoid": ["Overly harsh neons", "Excessively yellow mustard", "Washed-out beige with low contrast"],
+        },
+        "olive": {
+            "summary": "Olive undertones feature a distinctive green-yellow depth that shines in rich earthy greens, deep plums, warm burgundies, and bronzes.",
+            "flattering_families": [
+                "Earthy Greens (Forest, Muted Olive, Sage)",
+                "Rich Fig, Eggplant & Deep Plum",
+                "Burnished Bronze & Copper",
+                "Warm Rust & Terracotta",
+                "Warm Navy & Spiced Ochre",
+            ],
+            "best_metals": ["Antiqued Gold", "Bronze", "Pewter", "Rose Gold"],
+            "avoid": ["Pale Pastel Pinks", "Chalky Stark White", "Neon Acid Greens"],
+        },
+    }
+
+    return {
+        "undertone": u,
+        "depth": d,
+        **advice_map.get(u, advice_map["neutral"]),
+    }

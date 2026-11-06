@@ -103,7 +103,7 @@ def test_flash_pair_cancels_strong_ambient_cast():
     reference = render_face(cast=(1.0, 1.0, 1.0))
     mask = skin_mask_srgb(reference)
     skin_linear = lab_to_linear_rgb(np.array([60.0, 12.0, 22.0]))
-
+    
     # Store has a heavy warm-amber tint (e.g. 2500K halogen cast)
     ambient_cast = np.array([1.4, 0.8, 0.5])
     off_linear = 0.3 * srgb_to_linear(reference) * ambient_cast

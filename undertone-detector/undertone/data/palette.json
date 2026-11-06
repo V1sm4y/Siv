@@ -101,6 +101,39 @@
         { "name": "rosewood", "lab": [40, 18, 8] },
         { "name": "graphite", "lab": [25, 0, -2] }
       ]
+    },
+    "olive": {
+      "tolerance": 12.0,
+      "light": [
+        { "name": "soft cream", "lab": [90, -2, 10] },
+        { "name": "pale sage", "lab": [74, -10, 14] },
+        { "name": "moss gold", "lab": [68, -6, 32] },
+        { "name": "dusty rose", "lab": [70, 14, 8] },
+        { "name": "muted jade", "lab": [62, -18, 5] },
+        { "name": "slate teal", "lab": [56, -14, -2] },
+        { "name": "antique bronze", "lab": [60, 6, 28] },
+        { "name": "soft plum", "lab": [54, 18, -6] }
+      ],
+      "medium": [
+        { "name": "deep olive", "lab": [52, -10, 25] },
+        { "name": "warm terracotta", "lab": [56, 30, 32] },
+        { "name": "burnt amber", "lab": [64, 16, 48] },
+        { "name": "forest green", "lab": [46, -24, 12] },
+        { "name": "rich plum", "lab": [44, 26, -6] },
+        { "name": "warm burgundy", "lab": [42, 36, 16] },
+        { "name": "marigold ochre", "lab": [68, 6, 52] },
+        { "name": "warm navy", "lab": [32, 2, -20] }
+      ],
+      "deep": [
+        { "name": "dark emerald", "lab": [40, -32, 14] },
+        { "name": "burnt copper", "lab": [48, 28, 38] },
+        { "name": "deep fig", "lab": [34, 22, -4] },
+        { "name": "rich bronze", "lab": [44, 14, 32] },
+        { "name": "dark teal", "lab": [38, -16, -6] },
+        { "name": "spiced mustard", "lab": [60, 4, 46] },
+        { "name": "espresso", "lab": [26, 10, 14] },
+        { "name": "rich ruby", "lab": [38, 48, 18] }
+      ]
     }
   }
 }

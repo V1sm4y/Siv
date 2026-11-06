@@ -172,9 +172,9 @@ def test_erythema_flushing_detection_and_compensation():
 def test_olive_undertone_detection():
     config = AnalysisConfig()
     # Typical olive skin: moderate L*, low a* (greenish offset), high b*
-    result_olive = warm_cool_position(62.0, config, L=60.0, a=8.0, b=19.0)
+    result_olive = warm_cool_position(62.0, config, L=60.0, a=8.0, b=21.0)
     assert result_olive["is_olive"] is True
-    assert result_olive["olive_score"] == pytest.approx(19.0 - 1.25 * 8.0)
+    assert result_olive["olive_score"] == pytest.approx(21.0 - 1.25 * 8.0)
     assert "olive" in result_olive["undertone_subtype"]
 
     # Non-olive warm skin: higher a* relative to b*

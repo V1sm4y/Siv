@@ -243,7 +243,7 @@ def warm_cool_position(
 
     if a is not None and b is not None:
         olive_score = float(b - 1.25 * a)
-        is_olive = bool(olive_score >= 3.5 and (L is None or L < 78.0))
+        is_olive = bool(olive_score >= 9.0 and (L is None or L < 78.0))
         result["olive_score"] = olive_score
         result["is_olive"] = is_olive
         if is_olive:
@@ -471,10 +471,11 @@ def _finalize(
     depth_bucket = depth_from_ita(ita_value)
 
     palette_entries: list[dict[str, Any]] = []
+    styling: dict[str, Any] | None = None
+    palette_key = "olive" if position.get("is_olive") else position["label"]
     if gate["passed"]:
-        palette_entries = config.resolved_palette().suggest(
-            position["label"], depth_bucket
-        )
+        palette_entries = config.resolved_palette().suggest(palette_key, depth_bucket)
+        styling = config.resolved_palette().styling_advice(palette_key, depth_bucket)
 
     if not gate["passed"]:
         swatch_only = True
@@ -555,6 +556,7 @@ def _finalize(
             "calibrated": bool(config.calibrated),
         },
         "palette": palette_entries,
+        "styling": styling,
         "notes": notes,
     }
 

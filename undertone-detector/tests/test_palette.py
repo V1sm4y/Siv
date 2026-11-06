@@ -11,9 +11,29 @@ def palette():
 
 
 def test_palette_has_all_groups(palette):
-    for undertone in ("warm", "cool", "neutral"):
+    for undertone in ("warm", "cool", "neutral", "olive"):
         for depth in ("light", "medium", "deep"):
             assert len(palette.colors(undertone, depth)) >= 8
+
+
+def test_suggestions_include_hex_and_rgb(palette):
+    for undertone in ("warm", "cool", "neutral", "olive"):
+        for item in palette.suggest(undertone, "medium"):
+            assert item["hex"].startswith("#") and len(item["hex"]) == 7
+            assert len(item["rgb"]) == 3
+            assert all(0 <= v <= 255 for v in item["rgb"])
+
+
+def test_each_undertone_has_distinct_palette_and_advice(palette):
+    names = {
+        u: {c["name"] for c in palette.suggest(u, "medium")}
+        for u in ("warm", "cool", "neutral", "olive")
+    }
+    assert names["warm"] != names["cool"]
+    assert names["olive"] != names["neutral"]
+    for u in ("warm", "cool", "neutral", "olive"):
+        advice = palette.styling_advice(u, "medium")
+        assert advice["best_metals"] and advice["avoid"] and advice["flattering_families"]
 
 
 def test_exact_color_scores_zero_and_ranks_first(palette):
