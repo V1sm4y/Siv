@@ -14,6 +14,7 @@ from .color import (
     delta_e_ciede2000,
     hue_angle as _hue_angle,
     ita as _ita,
+    lab_to_srgb,
     linear_rgb_to_lab,
     linear_to_srgb,
     patch_color_cast,
@@ -434,6 +435,34 @@ def _finalize(
         hue_std=position_hue_std,
         n_regions=n_regions,
     )
+
+    # Compute color square swatch and exact statement
+    skin_lab = np.array([features["L"], features["a"], features["b"]], dtype=np.float64)
+    srgb_swatch = lab_to_srgb(skin_lab)
+    rgb_255 = np.clip(np.round(srgb_swatch * 255.0), 0, 255).astype(int)
+    skin_hex = f"#{int(rgb_255[0]):02X}{int(rgb_255[1]):02X}{int(rgb_255[2]):02X}"
+
+    label_upper = position["label"].upper()
+    subtype = position.get("undertone_subtype")
+    if subtype:
+        undertone_name = f"{subtype.replace('-', ' ').title()} Undertone"
+    else:
+        undertone_name = f"{position['label'].capitalize()} Undertone"
+
+    # Canonical undertone accent squares
+    undertone_accents = {
+        "warm": "#E59866",
+        "cool": "#E8A2B8",
+        "neutral": "#D4B298",
+    }
+    accent_hex = "#A2A868" if position.get("is_olive") else undertone_accents.get(position["label"], skin_hex)
+
+    position["color_hex"] = skin_hex
+    position["color_rgb"] = [int(rgb_255[0]), int(rgb_255[1]), int(rgb_255[2])]
+    position["accent_hex"] = accent_hex
+    position["undertone_name"] = undertone_name
+    position["statement"] = f"Your undertone is {label_upper} ({undertone_name})"
+
     confidence = _confidence(
         gate, features, agreement, clipping, cast_de, thresholds
     )

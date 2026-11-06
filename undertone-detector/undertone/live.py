@@ -130,7 +130,12 @@ def draw_overlay(
         depth = result["depth"]
         warm_cool = result["warm_cool"]
         confidence = result["confidence"]
+        undertone_exact = f"{warm_cool['label'].upper()} UNDERTONE"
+        if warm_cool.get("is_olive"):
+            undertone_exact += " (Olive Subtype)"
+
         lines = [
+            f"UNDERTONE: {undertone_exact}",
             f"L* {measurement['L']:.1f}   ITA {depth['ita']:.1f}   depth {depth['label']}",
             f"hue {warm_cool['hue']:.1f}   warm-cool {warm_cool['score']:+.2f} {warm_cool['label']}",
             f"confidence {confidence['score']:.2f} ({confidence['label']})   "
@@ -140,7 +145,7 @@ def draw_overlay(
             stable = warm_cool.get("stable")
             flag = "stable" if stable is True else "UNSTABLE" if stable is False else "n/a"
             lines.insert(
-                2,
+                3,
                 f"hue std {warm_cool['hue_std']:.2f} deg   {flag}"
                 + ("   calibrated" if warm_cool.get("calibrated") else ""),
             )
@@ -150,6 +155,32 @@ def draw_overlay(
     # blend into the video or overlap each other.
     _draw_panel(bgr, [f"{'PASS' if passed else 'FAIL'}   q=quit"], "top", width - 24, color)
     _draw_panel(bgr, lines, "bottom", width - 24)
+
+    # Draw a dedicated color square swatch in the top-right corner
+    if passed and measurement is not None:
+        wc = result.get("warm_cool", {})
+        rgb = wc.get("color_rgb", [210, 160, 120])
+        bgr_color = (int(rgb[2]), int(rgb[1]), int(rgb[0]))
+        box_size = 46
+        bx = width - box_size - 18
+        by = 54
+        # Drop shadow / border
+        cv2.rectangle(bgr, (bx - 2, by - 2), (bx + box_size + 2, by + box_size + 2), (0, 0, 0), -1)
+        cv2.rectangle(bgr, (bx - 1, by - 1), (bx + box_size + 1, by + box_size + 1), (255, 255, 255), 2)
+        # Swatch fill
+        cv2.rectangle(bgr, (bx, by), (bx + box_size, by + box_size), bgr_color, -1)
+        # Text label below square
+        cv2.putText(
+            bgr,
+            wc["label"].upper(),
+            (bx - 2, by + box_size + 15),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.45,
+            (255, 255, 255),
+            1,
+            cv2.LINE_AA,
+        )
+
     return bgr
 
 

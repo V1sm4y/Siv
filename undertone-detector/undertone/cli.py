@@ -92,6 +92,11 @@ def _resolve_patch(
     return detection.rect
 
 
+def _color_square(rgb: list[int] | tuple[int, int, int]) -> str:
+    r, g, b = rgb
+    return f"\033[48;2;{r};{g};{b}m   \033[0m"
+
+
 def _print_result(result: dict[str, Any], source: str) -> None:
     print(f"Undertone measurement ({source})")
     q = result["quality"]
@@ -109,6 +114,16 @@ def _print_result(result: dict[str, Any], source: str) -> None:
         wc = result["warm_cool"]
         c = result["confidence"]
         sign = "+" if wc["score"] >= 0 else ""
+        rgb = wc.get("color_rgb", [210, 160, 120])
+        hex_code = wc.get("color_hex", "#D2A078")
+        square = _color_square(rgb)
+        undertone_text = f"{wc['label'].upper()} UNDERTONE"
+        if wc.get("is_olive"):
+            undertone_text += " (Olive Subtype)"
+
+        print(
+            f"  Undertone  [{square}] EXACT: {undertone_text} ({hex_code})"
+        )
         print(
             f"  Depth      L*={m['L']:.1f}  ITA={d['ita']:.1f} deg  "
             f"({d['label']}; palette {d['palette_bucket']})"
