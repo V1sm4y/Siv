@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "undertone-detector"
+version = "0.1.0"
+description = "Camera-based skin depth and warm-to-cool position measurement for a smart mirror."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = ["numpy>=1.24"]
+
+[project.optional-dependencies]
+image = ["pillow>=9.0"]
+camera = ["opencv-python>=4.8"]
+test = ["pytest>=7.0"]
+
+[project.scripts]
+undertone = "undertone.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["undertone*"]
+
+[tool.setuptools.package-data]
+undertone = ["data/*.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

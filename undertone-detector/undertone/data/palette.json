@@ -1,0 +1,106 @@
+{
+  "version": 1,
+  "description": "STARTER palette, illustrative only. Replace with a stylist-approved table and validate against customer swatch overrides and purchase data. LAB values are target colors; tolerance is the CIEDE2000 radius the scorer treats as a comfortable match.",
+  "tolerance_default": 12.0,
+  "palettes": {
+    "warm": {
+      "tolerance": 12.0,
+      "light": [
+        { "name": "ivory", "lab": [92, 0, 12] },
+        { "name": "camel", "lab": [72, 8, 26] },
+        { "name": "peach", "lab": [78, 25, 25] },
+        { "name": "coral", "lab": [66, 45, 35] },
+        { "name": "moss gold", "lab": [68, -5, 35] },
+        { "name": "warm red", "lab": [54, 50, 35] },
+        { "name": "olive", "lab": [55, -10, 22] },
+        { "name": "butter yellow", "lab": [88, -5, 45] }
+      ],
+      "medium": [
+        { "name": "cream", "lab": [86, 0, 15] },
+        { "name": "terracotta", "lab": [58, 30, 35] },
+        { "name": "rust", "lab": [52, 35, 35] },
+        { "name": "mustard", "lab": [72, -2, 50] },
+        { "name": "warm olive", "lab": [58, -8, 30] },
+        { "name": "tomato", "lab": [55, 45, 40] },
+        { "name": "chocolate", "lab": [42, 18, 25] },
+        { "name": "gold", "lab": [75, 5, 55] }
+      ],
+      "deep": [
+        { "name": "warm white", "lab": [88, 0, 10] },
+        { "name": "amber", "lab": [70, 10, 55] },
+        { "name": "copper", "lab": [52, 25, 40] },
+        { "name": "brick", "lab": [45, 35, 30] },
+        { "name": "burnt orange", "lab": [55, 40, 45] },
+        { "name": "bronze", "lab": [48, 12, 35] },
+        { "name": "deep olive", "lab": [42, -10, 28] },
+        { "name": "espresso", "lab": [28, 12, 18] }
+      ]
+    },
+    "cool": {
+      "tolerance": 12.0,
+      "light": [
+        { "name": "pure white", "lab": [96, 0, 0] },
+        { "name": "powder blue", "lab": [82, -5, -10] },
+        { "name": "cool gray", "lab": [70, 0, -2] },
+        { "name": "rose pink", "lab": [72, 28, 5] },
+        { "name": "burgundy", "lab": [42, 35, 10] },
+        { "name": "emerald", "lab": [58, -30, 10] },
+        { "name": "navy", "lab": [35, 5, -25] },
+        { "name": "lavender", "lab": [70, 15, -12] }
+      ],
+      "medium": [
+        { "name": "bright white", "lab": [94, 0, 0] },
+        { "name": "icy pink", "lab": [80, 15, -2] },
+        { "name": "fuchsia", "lab": [60, 45, -10] },
+        { "name": "ruby red", "lab": [50, 55, 20] },
+        { "name": "blue red", "lab": [45, 50, 15] },
+        { "name": "royal blue", "lab": [40, 10, -45] },
+        { "name": "pine", "lab": [40, -20, 10] },
+        { "name": "plum", "lab": [40, 25, -8] }
+      ],
+      "deep": [
+        { "name": "crisp white", "lab": [92, 0, 0] },
+        { "name": "hot pink", "lab": [55, 55, 0] },
+        { "name": "ruby", "lab": [42, 55, 20] },
+        { "name": "emerald deep", "lab": [45, -35, 15] },
+        { "name": "sapphire", "lab": [35, 10, -45] },
+        { "name": "amethyst", "lab": [42, 30, -20] },
+        { "name": "icy blue", "lab": [78, -8, -15] },
+        { "name": "ink", "lab": [25, 2, -8] }
+      ]
+    },
+    "neutral": {
+      "tolerance": 12.0,
+      "light": [
+        { "name": "soft white", "lab": [93, 0, 3] },
+        { "name": "taupe", "lab": [68, 4, 8] },
+        { "name": "dusty rose", "lab": [72, 15, 10] },
+        { "name": "slate", "lab": [58, -3, -5] },
+        { "name": "sage", "lab": [65, -8, 12] },
+        { "name": "muted teal", "lab": [58, -12, 0] },
+        { "name": "soft black", "lab": [30, 0, 0] },
+        { "name": "camel neutral", "lab": [70, 6, 18] }
+      ],
+      "medium": [
+        { "name": "off white", "lab": [88, 0, 4] },
+        { "name": "dusty mauve", "lab": [62, 15, -2] },
+        { "name": "muted olive", "lab": [56, -6, 18] },
+        { "name": "denim", "lab": [48, -5, -18] },
+        { "name": "slate blue", "lab": [50, -2, -15] },
+        { "name": "soft coral", "lab": [64, 28, 18] },
+        { "name": "charcoal", "lab": [38, 0, -1] },
+        { "name": "sage medium", "lab": [60, -10, 10] }
+      ],
+      "deep": [
+        { "name": "bone", "lab": [84, 0, 6] },
+        { "name": "mauve", "lab": [55, 18, -2] },
+        { "name": "deep teal", "lab": [45, -12, 0] },
+        { "name": "deep sage", "lab": [40, -10, 8] },
+        { "name": "charcoal deep", "lab": [30, 0, 0] },
+        { "name": "slate deep", "lab": [40, -3, -8] },
+        { "name": "rosewood", "lab": [40, 18, 8] },
+        { "name": "graphite", "lab": [25, 0, -2] }
+      ]
+    }
+  }
+}
