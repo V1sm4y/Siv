@@ -3,7 +3,12 @@ import pytest
 
 from undertone.detect import AnalysisConfig, analyze_srgb, warm_cool_position
 from undertone.demo import render_face
-from undertone.features import RegionStats, fuse_region_hues
+from undertone.features import (
+    RegionStats,
+    detect_flushing_and_erythema,
+    fuse_region_hues,
+    measure_skin_texture,
+)
 from undertone.warmcool import (
     WarmCoolCalibration,
     evaluate_warm_cool,
@@ -133,3 +138,60 @@ def test_analysis_reports_region_fusion_and_stability():
     assert "stable" in warm_cool
     assert result["quality"]["hue_fusion"]["n_regions"] >= 2
     assert result["quality"]["calibrated"] is False
+
+
+def test_erythema_flushing_detection_and_compensation():
+    # Subject has warm undertone (forehead and jaw hue ~62 deg, a* = 10, b* = 19)
+    forehead = RegionStats("forehead", 500, L=62.0, a=10.0, b=19.0, hue=62.24, chroma=21.47)
+    jaw = RegionStats("jaw", 500, L=62.0, a=10.0, b=19.0, hue=62.24, chroma=21.47)
+    # Cheeks are flushed from heat/blushing: elevated a* = 15.0 -> raw hue drops to 51.7 deg
+    left_cheek = RegionStats("left_cheek", 500, L=61.0, a=15.0, b=19.0, hue=51.71, chroma=24.21)
+    right_cheek = RegionStats("right_cheek", 500, L=61.0, a=15.0, b=19.0, hue=51.71, chroma=24.21)
+
+    regions = {
+        "forehead": forehead,
+        "jaw": jaw,
+        "left_cheek": left_cheek,
+        "right_cheek": right_cheek,
+    }
+
+    erythema = detect_flushing_and_erythema(regions)
+    assert erythema["flushing_detected"] is True
+    assert erythema["delta_a"] == pytest.approx(5.0)
+
+    # Without compensation, flushed cheeks drag hue down into cool/neutral (< 56 deg)
+    uncompensated = fuse_region_hues(regions, compensate_flushing=False)
+    assert uncompensated["hue"] < 57.5
+
+    # With compensation, transient cheek redness is discounted, restoring true warm hue
+    compensated = fuse_region_hues(regions, compensate_flushing=True)
+    assert compensated["hue"] == pytest.approx(62.24, abs=0.5)
+    assert compensated["erythema"]["flushing_detected"] is True
+
+
+def test_olive_undertone_detection():
+    config = AnalysisConfig()
+    # Typical olive skin: moderate L*, low a* (greenish offset), high b*
+    result_olive = warm_cool_position(62.0, config, L=60.0, a=8.0, b=19.0)
+    assert result_olive["is_olive"] is True
+    assert result_olive["olive_score"] == pytest.approx(19.0 - 1.25 * 8.0)
+    assert "olive" in result_olive["undertone_subtype"]
+
+    # Non-olive warm skin: higher a* relative to b*
+    result_standard = warm_cool_position(62.0, config, L=60.0, a=14.0, b=19.0)
+    assert result_standard["is_olive"] is False
+    assert "undertone_subtype" not in result_standard
+
+
+def test_skin_texture_makeup_detection():
+    # Synthetic flat image has no skin pore variance
+    flat_image = np.ones((100, 100, 3), dtype=np.float64) * 0.5
+    mask = np.ones((100, 100), dtype=bool)
+    texture = measure_skin_texture(flat_image, mask)
+    assert texture["makeup_suspected"] is True
+
+    # Image with high-frequency microtexture has high variance
+    np.random.seed(42)
+    textured_image = flat_image + np.random.normal(0, 0.05, flat_image.shape)
+    texture_noisy = measure_skin_texture(np.clip(textured_image, 0, 1), mask)
+    assert texture_noisy["makeup_suspected"] is False

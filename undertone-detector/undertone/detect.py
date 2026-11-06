@@ -22,7 +22,9 @@ from .color import (
 )
 from .features import (
     bounding_box,
+    detect_flushing_and_erythema,
     fuse_region_hues,
+    measure_skin_texture,
     region_agreement,
     region_masks,
     region_statistics,
@@ -192,6 +194,8 @@ def warm_cool_position(
     config: AnalysisConfig,
     *,
     L: float | None = None,
+    a: float | None = None,
+    b: float | None = None,
     hue_std: float | None = None,
     n_regions: int | None = None,
 ) -> dict[str, Any]:
@@ -203,6 +207,9 @@ def warm_cool_position(
     When ``config.depth_hue_slope`` is non-zero (set by calibration), hue is
     first corrected for the population trend with lightness, so a deep-skinned
     cool person is not pushed warm purely by melanin's yellow bias.
+
+    ``a`` and ``b`` evaluate the 2D chromaticity plane for olive undertones
+    (orthogonal green-magenta deviation from the canonical melanin locus).
 
     ``hue_std``/``n_regions`` add an uncertainty estimate and a stability flag:
     a label is only stable when the 95% hue interval does not cross the neutral
@@ -232,6 +239,17 @@ def warm_cool_position(
         "neutral_band": float(config.neutral_band),
         "calibrated": bool(config.calibrated),
     }
+
+    if a is not None and b is not None:
+        olive_score = float(b - 1.25 * a)
+        is_olive = bool(olive_score >= 3.5 and (L is None or L < 78.0))
+        result["olive_score"] = olive_score
+        result["is_olive"] = is_olive
+        if is_olive:
+            result["undertone_subtype"] = f"{label}-olive" if label != "neutral" else "olive"
+    else:
+        result["olive_score"] = None
+        result["is_olive"] = False
     if hue_std is not None and np.isfinite(hue_std):
         sigma_score = float(hue_std) / abs(config.hue_span)
         margin = abs(score) - config.neutral_band
@@ -357,6 +375,7 @@ def _finalize(
     clipping: float,
     cast_de: float | None,
     led_to_ambient: float | None,
+    texture: dict[str, Any] | None = None,
     config: AnalysisConfig,
 ) -> dict[str, Any]:
     thresholds = config.thresholds
@@ -410,6 +429,8 @@ def _finalize(
         position_hue,
         config,
         L=features["L"],
+        a=features["a"],
+        b=features["b"],
         hue_std=position_hue_std,
         n_regions=n_regions,
     )
@@ -448,6 +469,14 @@ def _finalize(
         notes.append(
             "Hue corrected for the depth trend "
             f"({config.depth_hue_slope:+.2f} deg per L* unit)."
+        )
+    if fusion.get("erythema", {}).get("flushing_detected"):
+        notes.append(
+            "Transient cheek flushing detected; compensated using forehead/jaw baseline."
+        )
+    if texture and texture.get("makeup_suspected"):
+        notes.append(
+            "Low skin micro-texture detected (possible foundation, powder, or smoothing filter)."
         )
     if position.get("stable") is False:
         notes.append(
@@ -488,6 +517,8 @@ def _finalize(
                 for name, stat in region_stats.items()
             },
             "hue_fusion": fusion,
+            "erythema": fusion.get("erythema"),
+            "texture": texture,
             "tier": config.tier,
             "swatch_only": swatch_only,
             "require_confirmation": require_confirmation,
@@ -552,6 +583,7 @@ def analyze_srgb(
 
     region_stats = region_statistics(lab_image, regions)
     agreement = region_agreement(region_stats)
+    texture = measure_skin_texture(srgb, sample_mask)
 
     result = _finalize(
         features=features,
@@ -560,6 +592,7 @@ def analyze_srgb(
         clipping=clipping,
         cast_de=cast_de,
         led_to_ambient=None,
+        texture=texture,
         config=config,
     )
     result["quality"]["face_bbox"] = bounding_box(mask)
@@ -602,20 +635,21 @@ def analyze_pair_srgb(
         p_off = srgb_to_linear(patch_off)
         p_on = srgb_to_linear(patch_on)
         p_flash = np.clip(p_on - p_off, 0.0, None)
-        cast_de = patch_color_cast(p_off)
         on_wb_linear = on_linear * white_balance_gains(p_off)
 
-        # If the flash illuminated the reference patch with measurable signal above noise floor,
-        # balance the isolated LED difference using the flash illuminant.
+        # In flash/no-flash, ambient cast is cancelled by subtraction.
+        # Check cast of the flash illuminant if the flash hit the patch.
         flash_mean = float(np.mean(p_flash))
         off_mean = float(np.mean(p_off))
         if flash_mean > 0.03 and flash_mean > 0.15 * max(off_mean, 1e-6):
+            cast_de = patch_color_cast(p_flash)
             led_linear = diff_linear * white_balance_gains(p_flash)
         else:
+            cast_de = None
             led_linear = diff_linear
     elif patch_off is not None:
         p_off = srgb_to_linear(patch_off)
-        cast_de = patch_color_cast(p_off)
+        cast_de = None
         on_wb_linear = on_linear * white_balance_gains(p_off)
         led_linear = diff_linear
     elif patch_on is not None:
@@ -645,6 +679,8 @@ def analyze_pair_srgb(
         ambient_luma = float(np.median(off_linear[sample_mask] @ _NEUTRAL_LUMA))
         led_to_ambient = led_luma / max(ambient_luma, 1e-6)
 
+    texture = measure_skin_texture(on, sample_mask)
+
     result = _finalize(
         features=features,
         agreement=agreement,
@@ -652,6 +688,7 @@ def analyze_pair_srgb(
         clipping=clipping,
         cast_de=cast_de,
         led_to_ambient=led_to_ambient,
+        texture=texture,
         config=config,
     )
     result["quality"]["face_bbox"] = bounding_box(mask)

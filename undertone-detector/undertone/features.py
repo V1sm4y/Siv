@@ -337,6 +337,7 @@ def fuse_region_hues(
     regions: dict[str, RegionStats],
     outlier_deg: float = 6.0,
     weight_power: float = 0.5,
+    compensate_flushing: bool = True,
 ) -> dict[str, object]:
     """Combine per-region hues into one robust estimate.
 
@@ -345,6 +346,10 @@ def fuse_region_hues(
     This takes the circular median of the region hues, drops regions that
     disagree by more than ``outlier_deg`` (or 2.5 robust sigma), and returns the
     pixel-weighted circular mean of the survivors.
+
+    When ``compensate_flushing`` is True, transient cheek flushing (elevated a*
+    on cheeks vs forehead/jaw) is detected and adjusted so blood-flow redness
+    does not pull warm skin towards cool.
 
     ``weight_power`` controls how strongly large regions dominate; 0.5 uses
     ``sqrt(n_pixels)`` so a big region cannot swamp a well-measured small one.
@@ -357,10 +362,28 @@ def fuse_region_hues(
             "n_regions": 0,
             "used": [],
             "rejected": [],
+            "erythema": {"flushing_detected": False, "delta_a": 0.0},
         }
 
+    erythema = (
+        detect_flushing_and_erythema(regions)
+        if compensate_flushing
+        else {"flushing_detected": False, "delta_a": 0.0}
+    )
+
     names = list(regions)
-    hues = np.array([regions[name].hue for name in names], dtype=np.float64)
+    hues_list: list[float] = []
+    for name in names:
+        r = regions[name]
+        if erythema["flushing_detected"] and name in ("left_cheek", "right_cheek"):
+            # Compensate cheek a* by subtracting transient erythema
+            a_adj = r.a - erythema["delta_a"]
+            adj_hue = float(_hue_angle(np.array([r.L, a_adj, r.b])))
+            hues_list.append(adj_hue)
+        else:
+            hues_list.append(r.hue)
+
+    hues = np.array(hues_list, dtype=np.float64)
     counts = np.array([max(int(regions[name].n_pixels), 1) for name in names], dtype=np.float64)
     weights = counts**weight_power
 
@@ -372,11 +395,10 @@ def fuse_region_hues(
             "n_regions": 1,
             "used": names,
             "rejected": [],
+            "erythema": erythema,
         }
 
     reference = circular_mean_deg(hues, weights)
-    # Unwrap around the reference so skin hues near a wrap boundary stay
-    # contiguous; skin is normally 0-90 degrees, but this keeps the code general.
     unwrapped = reference + np.array([_wrap180(h - reference) for h in hues])
     median = float(np.median(unwrapped))
     deviations = np.abs(unwrapped - median)
@@ -400,4 +422,79 @@ def fuse_region_hues(
         "n_regions": int(hues.size),
         "used": [names[i] for i in np.flatnonzero(keep)],
         "rejected": [names[i] for i in np.flatnonzero(~keep)],
+        "erythema": erythema,
+    }
+
+
+def detect_flushing_and_erythema(
+    regions: dict[str, RegionStats],
+    flushing_threshold_a: float = 2.5,
+) -> dict[str, Any]:
+    """Detect transient facial erythema (blushing/flushing).
+
+    Erythema raises redness (a*) primarily on the cheeks relative to the
+    forehead or jaw. Uncompensated erythema lowers hue = atan2(b*, a*),
+    erroneously flipping warm skin to cool.
+    """
+    cheeks = [regions[name] for name in ("left_cheek", "right_cheek") if name in regions]
+    if not cheeks or "forehead" not in regions:
+        return {
+            "flushing_detected": False,
+            "delta_a": 0.0,
+            "cheek_a": None,
+            "baseline_a": None,
+        }
+
+    forehead = regions["forehead"]
+    cheek_a = float(np.mean([c.a for c in cheeks]))
+
+    # Forehead is the primary non-blushing reference.
+    # Include jaw only if it does not violently disagree with forehead (e.g. beard shadow).
+    baseline_regions = [forehead]
+    if "jaw" in regions:
+        jaw = regions["jaw"]
+        if abs(_wrap180(jaw.hue - forehead.hue)) <= 12.0:
+            baseline_regions.append(jaw)
+
+    baseline_a = float(np.mean([b.a for b in baseline_regions]))
+    delta_a = cheek_a - baseline_a
+    flushing_detected = bool(delta_a >= flushing_threshold_a)
+
+    return {
+        "flushing_detected": flushing_detected,
+        "delta_a": float(delta_a),
+        "cheek_a": cheek_a,
+        "baseline_a": baseline_a,
+    }
+
+
+def measure_skin_texture(srgb: np.ndarray, mask: np.ndarray) -> dict[str, Any]:
+    """Analyze high-frequency skin texture variance to detect heavy foundation/smoothing.
+
+    Liquid foundation, heavy powder, and beauty filters fill in pores and micro-texture,
+    sharply reducing high-frequency luminance gradient variance on bare skin.
+    """
+    if mask.ndim != 2 or not mask.any():
+        return {"texture_variance": 0.0, "makeup_suspected": False}
+
+    gray = 0.2126 * srgb[..., 0] + 0.7152 * srgb[..., 1] + 0.0722 * srgb[..., 2]
+    lap = np.zeros_like(gray)
+    lap[1:-1, 1:-1] = (
+        gray[:-2, 1:-1]
+        + gray[2:, 1:-1]
+        + gray[1:-1, :-2]
+        + gray[1:-1, 2:]
+        - 4.0 * gray[1:-1, 1:-1]
+    )
+    eroded_mask = _erode(mask)
+    if not eroded_mask.any():
+        eroded_mask = mask
+    skin_lap = lap[eroded_mask]
+    if skin_lap.size < 100:
+        return {"texture_variance": 0.0, "makeup_suspected": False}
+    var = float(np.var(skin_lap))
+    makeup_suspected = bool(var < 0.00015)
+    return {
+        "texture_variance": var,
+        "makeup_suspected": makeup_suspected,
     }
